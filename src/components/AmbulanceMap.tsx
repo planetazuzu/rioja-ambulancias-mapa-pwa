@@ -85,7 +85,9 @@ const AmbulanceMap: React.FC = () => {
   };
 
   const getCurrentLocation = () => {
+    console.log('Getting current location...');
     if (!navigator.geolocation) {
+      console.log('Geolocation not available');
       toast.error('La geolocalización no está disponible en este navegador');
       return;
     }
@@ -93,6 +95,7 @@ const AmbulanceMap: React.FC = () => {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
+        console.log('Got location:', latitude, longitude);
         setUserLocation({ lat: latitude, lng: longitude });
         
         const nearest = findNearestAmbulance(latitude, longitude);
@@ -137,7 +140,11 @@ const AmbulanceMap: React.FC = () => {
   };
 
   const updateMapDisplay = () => {
-    if (!mapInstanceRef.current) return;
+    console.log('Updating map display...');
+    if (!mapInstanceRef.current) {
+      console.log('Map instance not available yet');
+      return;
+    }
 
     // Clear existing layers
     markersRef.current.clearLayers();
@@ -151,6 +158,8 @@ const AmbulanceMap: React.FC = () => {
                            (filters.show12h && ambulance.horario === '12 h (día)');
       return typeMatch && scheduleMatch;
     });
+
+    console.log('Filtered ambulances:', filteredAmbulances.length);
 
     // Add markers and coverage circles for filtered ambulances
     filteredAmbulances.forEach(ambulance => {
@@ -195,29 +204,49 @@ const AmbulanceMap: React.FC = () => {
     // Add layers to map
     markersRef.current.addTo(mapInstanceRef.current);
     coverageRef.current.addTo(mapInstanceRef.current);
+    console.log('Map display updated successfully');
   };
 
   useEffect(() => {
-    if (!mapRef.current) return;
+    console.log('Map component mounting...');
+    console.log('Map ref current:', mapRef.current);
+    
+    if (!mapRef.current) {
+      console.log('Map ref is null, cannot initialize map');
+      return;
+    }
 
-    // Initialize map
-    const map = L.map(mapRef.current, {
-      center: [LA_RIOJA_CENTER.lat, LA_RIOJA_CENTER.lng],
-      zoom: 10,
-      zoomControl: true
-    });
+    try {
+      console.log('Initializing map...');
+      // Initialize map
+      const map = L.map(mapRef.current, {
+        center: [LA_RIOJA_CENTER.lat, LA_RIOJA_CENTER.lng],
+        zoom: 10,
+        zoomControl: true
+      });
 
-    // Add tile layer
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
+      console.log('Map created successfully');
 
-    mapInstanceRef.current = map;
+      // Add tile layer
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map);
 
-    // Initial display
-    updateMapDisplay();
+      console.log('Tile layer added');
+
+      mapInstanceRef.current = map;
+
+      // Initial display
+      updateMapDisplay();
+      
+      console.log('Map initialization complete');
+    } catch (error) {
+      console.error('Error initializing map:', error);
+      toast.error('Error al cargar el mapa');
+    }
 
     return () => {
+      console.log('Cleaning up map...');
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
       }
@@ -225,6 +254,7 @@ const AmbulanceMap: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    console.log('Filters changed:', filters);
     updateMapDisplay();
   }, [filters]);
 
@@ -234,6 +264,8 @@ const AmbulanceMap: React.FC = () => {
       [filterKey]: !prev[filterKey]
     }));
   };
+
+  console.log('Rendering AmbulanceMap component');
 
   return (
     <div className="flex flex-col lg:flex-row h-screen bg-background">
@@ -356,7 +388,12 @@ const AmbulanceMap: React.FC = () => {
 
       {/* Map */}
       <div className="flex-1 relative">
-        <div ref={mapRef} className="w-full h-full" />
+        <div ref={mapRef} className="w-full h-full" style={{ minHeight: '400px', backgroundColor: '#f0f0f0' }} />
+        {!mapInstanceRef.current && (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+            <p className="text-gray-600">Cargando mapa...</p>
+          </div>
+        )}
       </div>
     </div>
   );
