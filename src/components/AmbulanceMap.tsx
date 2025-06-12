@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import { ambulancesData, LA_RIOJA_CENTER, Ambulance } from '../data/ambulances';
@@ -326,16 +325,6 @@ const AmbulanceMap: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-green-600"></div>
                   <span>SVB 12h</span>
-                </div>
-                <div className="border-t pt-2 mt-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-1 bg-blue-500 opacity-40"></div>
-                    <span>Cobertura 10km</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-1 bg-red-500 opacity-40"></div>
-                    <span>Cobertura 15km</span>
-                  </div>
                 </div>
               </div>
             </CardContent>
