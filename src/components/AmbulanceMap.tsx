@@ -1,0 +1,376 @@
+
+import React, { useEffect, useRef, useState } from 'react';
+import L from 'leaflet';
+import { ambulancesData, LA_RIOJA_CENTER, Ambulance } from '../data/ambulances';
+import { MapPin, Navigation, Eye, EyeOff } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from 'sonner';
+
+// Fix for default markers in Leaflet
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
+
+interface FilterState {
+  showSVB: boolean;
+  showSVA: boolean;
+  show24h: boolean;
+  show12h: boolean;
+}
+
+const AmbulanceMap: React.FC = () => {
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<L.Map | null>(null);
+  const markersRef = useRef<L.LayerGroup>(new L.LayerGroup());
+  const coverageRef = useRef<L.LayerGroup>(new L.LayerGroup());
+  const userLocationRef = useRef<L.Marker | null>(null);
+  
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [nearestAmbulance, setNearestAmbulance] = useState<Ambulance | null>(null);
+  const [filters, setFilters] = useState<FilterState>({
+    showSVB: true,
+    showSVA: true,
+    show24h: true,
+    show12h: true
+  });
+
+  const getMarkerIcon = (ambulance: Ambulance) => {
+    const isSVA = ambulance.tipo === 'SVA';
+    const is24h = ambulance.horario === '24 h';
+    
+    // Color based on type and schedule
+    let color = '#c41230'; // Default red
+    if (isSVA && is24h) color = '#dc2626'; // Red for SVA 24h
+    else if (isSVA && !is24h) color = '#f97316'; // Orange for SVA 12h
+    else if (!isSVA && is24h) color = '#2563eb'; // Blue for SVB 24h
+    else color = '#16a34a'; // Green for SVB 12h
+
+    return L.divIcon({
+      html: `
+        <div style="
+          background-color: ${color};
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          border: 2px solid white;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        "></div>
+      `,
+      className: 'custom-div-icon',
+      iconSize: [12, 12],
+      iconAnchor: [6, 6]
+    });
+  };
+
+  const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+    const R = 6371; // Earth's radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLng/2) * Math.sin(dLng/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  };
+
+  const findNearestAmbulance = (userLat: number, userLng: number): Ambulance => {
+    return ambulancesData.reduce((nearest, current) => {
+      const currentDistance = calculateDistance(userLat, userLng, current.lat, current.lng);
+      const nearestDistance = calculateDistance(userLat, userLng, nearest.lat, nearest.lng);
+      return currentDistance < nearestDistance ? current : nearest;
+    });
+  };
+
+  const getCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error('La geolocalización no está disponible en este navegador');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setUserLocation({ lat: latitude, lng: longitude });
+        
+        const nearest = findNearestAmbulance(latitude, longitude);
+        setNearestAmbulance(nearest);
+        
+        const distance = calculateDistance(latitude, longitude, nearest.lat, nearest.lng).toFixed(1);
+        toast.success(`Ambulancia más cercana: ${nearest.nombre} (${distance} km)`);
+        
+        // Add user location marker
+        if (mapInstanceRef.current) {
+          if (userLocationRef.current) {
+            mapInstanceRef.current.removeLayer(userLocationRef.current);
+          }
+          
+          userLocationRef.current = L.marker([latitude, longitude], {
+            icon: L.divIcon({
+              html: `
+                <div style="
+                  background-color: #10b981;
+                  width: 16px;
+                  height: 16px;
+                  border-radius: 50%;
+                  border: 3px solid white;
+                  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+                "></div>
+              `,
+              className: 'user-location-icon',
+              iconSize: [16, 16],
+              iconAnchor: [8, 8]
+            })
+          }).addTo(mapInstanceRef.current);
+          
+          // Pan to user location
+          mapInstanceRef.current.setView([latitude, longitude], 12);
+        }
+      },
+      (error) => {
+        console.error('Error getting location:', error);
+        toast.error('No se pudo obtener la ubicación');
+      }
+    );
+  };
+
+  const updateMapDisplay = () => {
+    if (!mapInstanceRef.current) return;
+
+    // Clear existing layers
+    markersRef.current.clearLayers();
+    coverageRef.current.clearLayers();
+
+    // Filter ambulances based on current filters
+    const filteredAmbulances = ambulancesData.filter(ambulance => {
+      const typeMatch = (filters.showSVB && ambulance.tipo === 'SVB') || 
+                       (filters.showSVA && ambulance.tipo === 'SVA');
+      const scheduleMatch = (filters.show24h && ambulance.horario === '24 h') || 
+                           (filters.show12h && ambulance.horario === '12 h (día)');
+      return typeMatch && scheduleMatch;
+    });
+
+    // Add markers and coverage circles for filtered ambulances
+    filteredAmbulances.forEach(ambulance => {
+      // Add marker
+      const marker = L.marker([ambulance.lat, ambulance.lng], {
+        icon: getMarkerIcon(ambulance)
+      });
+      
+      marker.bindPopup(`
+        <div class="p-2">
+          <h3 class="font-bold text-sm">${ambulance.nombre}</h3>
+          <p class="text-xs text-gray-600">Tipo: ${ambulance.tipo}</p>
+          <p class="text-xs text-gray-600">Horario: ${ambulance.horario}</p>
+        </div>
+      `);
+      
+      markersRef.current.addLayer(marker);
+
+      // Add coverage circles
+      const coverage10km = L.circle([ambulance.lat, ambulance.lng], {
+        radius: 10000,
+        fillColor: '#3b82f6',
+        color: '#3b82f6',
+        weight: 1,
+        opacity: 0.4,
+        fillOpacity: 0.1
+      });
+      
+      const coverage15km = L.circle([ambulance.lat, ambulance.lng], {
+        radius: 15000,
+        fillColor: '#ef4444',
+        color: '#ef4444',
+        weight: 1,
+        opacity: 0.4,
+        fillOpacity: 0.1
+      });
+      
+      coverageRef.current.addLayer(coverage10km);
+      coverageRef.current.addLayer(coverage15km);
+    });
+
+    // Add layers to map
+    markersRef.current.addTo(mapInstanceRef.current);
+    coverageRef.current.addTo(mapInstanceRef.current);
+  };
+
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    // Initialize map
+    const map = L.map(mapRef.current, {
+      center: [LA_RIOJA_CENTER.lat, LA_RIOJA_CENTER.lng],
+      zoom: 10,
+      zoomControl: true
+    });
+
+    // Add tile layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    mapInstanceRef.current = map;
+
+    // Initial display
+    updateMapDisplay();
+
+    return () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    updateMapDisplay();
+  }, [filters]);
+
+  const toggleFilter = (filterKey: keyof FilterState) => {
+    setFilters(prev => ({
+      ...prev,
+      [filterKey]: !prev[filterKey]
+    }));
+  };
+
+  return (
+    <div className="flex flex-col lg:flex-row h-screen bg-background">
+      {/* Controls Sidebar */}
+      <div className="lg:w-80 w-full lg:h-full h-auto bg-card border-r border-border p-4 overflow-y-auto">
+        <div className="space-y-4">
+          {/* Header */}
+          <div className="flex items-center gap-2 mb-6">
+            <MapPin className="w-6 h-6 text-primary" />
+            <h1 className="text-xl font-bold text-foreground">Ambulancias La Rioja</h1>
+          </div>
+
+          {/* Location Button */}
+          <Button 
+            onClick={getCurrentLocation}
+            className="w-full flex items-center gap-2"
+            variant="outline"
+          >
+            <Navigation className="w-4 h-4" />
+            Mi Ubicación
+          </Button>
+
+          {/* Filters */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">Filtros</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  variant={filters.showSVB ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => toggleFilter('showSVB')}
+                  className="text-xs"
+                >
+                  {filters.showSVB ? <Eye className="w-3 h-3 mr-1" /> : <EyeOff className="w-3 h-3 mr-1" />}
+                  SVB
+                </Button>
+                <Button
+                  variant={filters.showSVA ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => toggleFilter('showSVA')}
+                  className="text-xs"
+                >
+                  {filters.showSVA ? <Eye className="w-3 h-3 mr-1" /> : <EyeOff className="w-3 h-3 mr-1" />}
+                  SVA
+                </Button>
+                <Button
+                  variant={filters.show24h ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => toggleFilter('show24h')}
+                  className="text-xs"
+                >
+                  {filters.show24h ? <Eye className="w-3 h-3 mr-1" /> : <EyeOff className="w-3 h-3 mr-1" />}
+                  24h
+                </Button>
+                <Button
+                  variant={filters.show12h ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => toggleFilter('show12h')}
+                  className="text-xs"
+                >
+                  {filters.show12h ? <Eye className="w-3 h-3 mr-1" /> : <EyeOff className="w-3 h-3 mr-1" />}
+                  12h
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Legend */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">Leyenda</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div className="space-y-2 text-xs">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-red-600"></div>
+                  <span>SVA 24h</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+                  <span>SVA 12h</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-blue-600"></div>
+                  <span>SVB 24h</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-green-600"></div>
+                  <span>SVB 12h</span>
+                </div>
+                <div className="border-t pt-2 mt-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-1 bg-blue-500 opacity-40"></div>
+                    <span>Cobertura 10km</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-1 bg-red-500 opacity-40"></div>
+                    <span>Cobertura 15km</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Nearest Ambulance */}
+          {nearestAmbulance && userLocation && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">Ambulancia Más Cercana</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-xs space-y-1">
+                  <p className="font-medium">{nearestAmbulance.nombre}</p>
+                  <p className="text-muted-foreground">
+                    Distancia: {calculateDistance(
+                      userLocation.lat, 
+                      userLocation.lng, 
+                      nearestAmbulance.lat, 
+                      nearestAmbulance.lng
+                    ).toFixed(1)} km
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+
+      {/* Map */}
+      <div className="flex-1 relative">
+        <div ref={mapRef} className="w-full h-full" />
+      </div>
+    </div>
+  );
+};
+
+export default AmbulanceMap;
