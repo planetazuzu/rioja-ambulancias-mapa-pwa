@@ -30,16 +30,7 @@ export const getMarkerIcon = (ambulance: Ambulance) => {
   else if (!isSVA && is24h) markerColor = 'blue'; // Blue for SVB 24h
   else markerColor = 'green'; // Green for SVB 12h
 
-  // Check if AwesomeMarkers is available
-  if (window.L && window.L.AwesomeMarkers) {
-    return window.L.AwesomeMarkers.icon({
-      icon: 'fa-ambulance',
-      markerColor: markerColor,
-      prefix: 'fa'
-    });
-  }
-
-  // Fallback to div icon if AwesomeMarkers is not loaded
+  // Use FontAwesome ambulance icon with colored background
   const color = markerColor === 'red' ? '#dc2626' : 
                 markerColor === 'orange' ? '#f97316' :
                 markerColor === 'blue' ? '#2563eb' : '#16a34a';
@@ -47,17 +38,25 @@ export const getMarkerIcon = (ambulance: Ambulance) => {
   return L.divIcon({
     html: `
       <div style="
+        display: flex;
+        align-items: center;
+        justify-content: center;
         background-color: ${color};
-        width: 12px;
-        height: 12px;
+        width: 32px;
+        height: 32px;
         border-radius: 50%;
-        border: 2px solid white;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-      "></div>
+        border: 3px solid white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        font-size: 14px;
+        color: white;
+      ">
+        <i class="fas fa-ambulance"></i>
+      </div>
     `,
-    className: 'custom-div-icon',
-    iconSize: [12, 12],
-    iconAnchor: [6, 6]
+    className: 'custom-ambulance-icon',
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
+    popupAnchor: [0, -16]
   });
 };
 

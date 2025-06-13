@@ -115,9 +115,13 @@
 }
 
 /* Custom marker styles */
-.custom-div-icon {
+.custom-ambulance-icon {
   background: transparent !important;
   border: none !important;
+}
+
+.custom-ambulance-icon i {
+  pointer-events: none;
 }
 
 .user-location-icon {
