@@ -300,33 +300,6 @@ const AmbulanceMap: React.FC = () => {
             </CardContent>
           </Card>
 
-          {/* Legend */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Leyenda</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="space-y-2 text-xs">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-red-600"></div>
-                  <span>SVA 24h</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-                  <span>SVA 12h</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-blue-600"></div>
-                  <span>SVB 24h</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-green-600"></div>
-                  <span>SVB 12h</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Nearest Ambulance */}
           {nearestAmbulance && userLocation && <Card>
               <CardHeader>
