@@ -6,6 +6,21 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 
+// Extend Leaflet to include AwesomeMarkers
+declare global {
+  interface Window {
+    L: typeof L & {
+      AwesomeMarkers: {
+        icon: (options: {
+          icon: string;
+          markerColor: string;
+          prefix: string;
+        }) => L.Icon;
+      };
+    };
+  }
+}
+
 // Fix for default markers in Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -13,12 +28,14 @@ L.Icon.Default.mergeOptions({
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png'
 });
+
 interface FilterState {
   showSVB: boolean;
   showSVA: boolean;
   show24h: boolean;
   show12h: boolean;
 }
+
 const AmbulanceMap: React.FC = () => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -36,16 +53,31 @@ const AmbulanceMap: React.FC = () => {
     show24h: true,
     show12h: true
   });
+
   const getMarkerIcon = (ambulance: Ambulance) => {
     const isSVA = ambulance.tipo === 'SVA';
     const is24h = ambulance.horario === '24 h';
 
     // Color based on type and schedule
-    let color = '#c41230'; // Default red
-    if (isSVA && is24h) color = '#dc2626'; // Red for SVA 24h
-    else if (isSVA && !is24h) color = '#f97316'; // Orange for SVA 12h
-    else if (!isSVA && is24h) color = '#2563eb'; // Blue for SVB 24h
-    else color = '#16a34a'; // Green for SVB 12h
+    let markerColor = 'red'; // Default red
+    if (isSVA && is24h) markerColor = 'red'; // Red for SVA 24h
+    else if (isSVA && !is24h) markerColor = 'orange'; // Orange for SVA 12h
+    else if (!isSVA && is24h) markerColor = 'blue'; // Blue for SVB 24h
+    else markerColor = 'green'; // Green for SVB 12h
+
+    // Check if AwesomeMarkers is available
+    if (window.L && window.L.AwesomeMarkers) {
+      return window.L.AwesomeMarkers.icon({
+        icon: 'ambulance',
+        markerColor: markerColor,
+        prefix: 'fa'
+      });
+    }
+
+    // Fallback to div icon if AwesomeMarkers is not loaded
+    const color = markerColor === 'red' ? '#dc2626' : 
+                  markerColor === 'orange' ? '#f97316' :
+                  markerColor === 'blue' ? '#2563eb' : '#16a34a';
 
     return L.divIcon({
       html: `
@@ -63,6 +95,7 @@ const AmbulanceMap: React.FC = () => {
       iconAnchor: [6, 6]
     });
   };
+
   const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
     const R = 6371; // Earth's radius in km
     const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -71,6 +104,7 @@ const AmbulanceMap: React.FC = () => {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   };
+
   const findNearestAmbulance = (userLat: number, userLng: number): Ambulance => {
     return ambulancesData.reduce((nearest, current) => {
       const currentDistance = calculateDistance(userLat, userLng, current.lat, current.lng);
@@ -78,6 +112,7 @@ const AmbulanceMap: React.FC = () => {
       return currentDistance < nearestDistance ? current : nearest;
     });
   };
+
   const getCurrentLocation = () => {
     console.log('Getting current location...');
     if (!navigator.geolocation) {
@@ -131,6 +166,7 @@ const AmbulanceMap: React.FC = () => {
       toast.error('No se pudo obtener la ubicación');
     });
   };
+
   const updateMapDisplay = () => {
     console.log('Updating map display...');
     if (!mapInstanceRef.current) {
@@ -150,9 +186,9 @@ const AmbulanceMap: React.FC = () => {
     });
     console.log('Filtered ambulances:', filteredAmbulances.length);
 
-    // Add markers and coverage circles for filtered ambulances
+    // Add markers for filtered ambulances
     filteredAmbulances.forEach(ambulance => {
-      // Add marker
+      // Add marker with FontAwesome icon
       const marker = L.marker([ambulance.lat, ambulance.lng], {
         icon: getMarkerIcon(ambulance)
       });
@@ -164,33 +200,13 @@ const AmbulanceMap: React.FC = () => {
         </div>
       `);
       markersRef.current.addLayer(marker);
-
-      // Add coverage circles
-      const coverage10km = L.circle([ambulance.lat, ambulance.lng], {
-        radius: 10000,
-        fillColor: '#3b82f6',
-        color: '#3b82f6',
-        weight: 1,
-        opacity: 0.4,
-        fillOpacity: 0.1
-      });
-      const coverage15km = L.circle([ambulance.lat, ambulance.lng], {
-        radius: 15000,
-        fillColor: '#ef4444',
-        color: '#ef4444',
-        weight: 1,
-        opacity: 0.4,
-        fillOpacity: 0.1
-      });
-      coverageRef.current.addLayer(coverage10km);
-      coverageRef.current.addLayer(coverage15km);
     });
 
     // Add layers to map
     markersRef.current.addTo(mapInstanceRef.current);
-    coverageRef.current.addTo(mapInstanceRef.current);
     console.log('Map display updated successfully');
   };
+
   useEffect(() => {
     console.log('Map component mounting...');
     console.log('Map ref current:', mapRef.current);
@@ -239,6 +255,7 @@ const AmbulanceMap: React.FC = () => {
       [filterKey]: !prev[filterKey]
     }));
   };
+
   console.log('Rendering AmbulanceMap component');
   return <div className="flex flex-col lg:flex-row h-screen bg-background">
       {/* Controls Sidebar */}
@@ -339,4 +356,5 @@ const AmbulanceMap: React.FC = () => {
       </div>
     </div>;
 };
+
 export default AmbulanceMap;
