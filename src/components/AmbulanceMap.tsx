@@ -11,7 +11,10 @@ const AmbulanceMap: React.FC = () => {
     nearestAmbulance,
     filters,
     getCurrentLocation,
-    toggleFilter
+    toggleFilter,
+    ambulanceVisibility,
+    toggleAmbulanceVisibility,
+    setAllAmbulancesVisibility
   } = useAmbulanceMap();
 
   console.log('Rendering AmbulanceMap component');
@@ -25,6 +28,9 @@ const AmbulanceMap: React.FC = () => {
         nearestAmbulance={nearestAmbulance}
         onLocationClick={getCurrentLocation}
         onToggleFilter={toggleFilter}
+        ambulanceVisibility={ambulanceVisibility}
+        toggleAmbulanceVisibility={toggleAmbulanceVisibility}
+        setAllAmbulancesVisibility={setAllAmbulancesVisibility}
       />
 
       {/* Map */}

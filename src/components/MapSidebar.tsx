@@ -1,10 +1,11 @@
 
 import React from 'react';
-import { MapPin, Navigation, Eye, EyeOff } from 'lucide-react';
+import { MapPin, Navigation, Eye, EyeOff, EyeIcon, EyeOffIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from './ui/checkbox';
 import { FilterState, UserLocation } from '../types/ambulance';
-import { Ambulance } from '../data/ambulances';
+import { Ambulance, ambulancesData } from '../data/ambulances';
 import { calculateDistance } from '../utils/mapUtils';
 
 interface MapSidebarProps {
@@ -13,6 +14,9 @@ interface MapSidebarProps {
   nearestAmbulance: Ambulance | null;
   onLocationClick: () => void;
   onToggleFilter: (filterKey: keyof FilterState) => void;
+  ambulanceVisibility: Record<string, boolean>;
+  toggleAmbulanceVisibility: (nombre: string) => void;
+  setAllAmbulancesVisibility: (visible: boolean) => void;
 }
 
 const MapSidebar: React.FC<MapSidebarProps> = ({
@@ -20,8 +24,16 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
   userLocation,
   nearestAmbulance,
   onLocationClick,
-  onToggleFilter
+  onToggleFilter,
+  ambulanceVisibility,
+  toggleAmbulanceVisibility,
+  setAllAmbulancesVisibility
 }) => {
+  // Saber si todas están seleccionadas
+  const visibleCount = Object.values(ambulanceVisibility).filter(Boolean).length;
+  const allChecked = visibleCount === ambulancesData.length;
+  const someChecked = visibleCount > 0 && visibleCount < ambulancesData.length;
+
   return (
     <div className="lg:w-80 w-full lg:h-full h-auto bg-card border-r border-border p-4 overflow-y-auto">
       <div className="space-y-4">
@@ -37,7 +49,7 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
           Mi Ubicación
         </Button>
 
-        {/* Filters */}
+        {/* Filtros */}
         <Card>
           <CardHeader>
             <CardTitle className="text-sm">Filtros</CardTitle>
@@ -80,6 +92,42 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
                 {filters.show12h ? <Eye className="w-3 h-3 mr-1" /> : <EyeOff className="w-3 h-3 mr-1" />}
                 12h
               </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* NUEVO: Selector de "todas" y lista de ambulancias */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">Capas</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="mb-2 flex items-center gap-2">
+              <Checkbox
+                id="toggle-all"
+                checked={allChecked}
+                indeterminate={someChecked}
+                onCheckedChange={(checked) => {
+                  setAllAmbulancesVisibility(!!checked);
+                }}
+              />
+              <label htmlFor="toggle-all" className="text-xs font-semibold select-none cursor-pointer">
+                Seleccionar todas
+              </label>
+            </div>
+            <div className="max-h-52 overflow-y-auto pr-2 space-y-1">
+              {ambulancesData.map(ambulance => (
+                <div key={ambulance.nombre} className="flex items-center gap-2">
+                  <Checkbox
+                    id={`ambulance-${ambulance.nombre}`}
+                    checked={ambulanceVisibility[ambulance.nombre]}
+                    onCheckedChange={() => toggleAmbulanceVisibility(ambulance.nombre)}
+                  />
+                  <label htmlFor={`ambulance-${ambulance.nombre}`} className="text-xs cursor-pointer select-none">
+                    {ambulance.nombre} <span className="text-[10px] text-muted-foreground">({ambulance.tipo})</span>
+                  </label>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>

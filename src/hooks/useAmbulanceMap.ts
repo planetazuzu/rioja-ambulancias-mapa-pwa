@@ -19,7 +19,7 @@ export const useAmbulanceMap = () => {
   const markersRef = useRef<L.LayerGroup>(new L.LayerGroup());
   const coverageRef = useRef<L.LayerGroup>(new L.LayerGroup());
   const userLocationRef = useRef<L.Marker | null>(null);
-  
+
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [nearestAmbulance, setNearestAmbulance] = useState<Ambulance | null>(null);
   const [filters, setFilters] = useState<FilterState>({
@@ -28,6 +28,32 @@ export const useAmbulanceMap = () => {
     show24h: true,
     show12h: true
   });
+
+  // NUEVO: visibilidad individual
+  const [ambulanceVisibility, setAmbulanceVisibility] = useState<Record<string, boolean>>(() => {
+    const visibility: Record<string, boolean> = {};
+    ambulancesData.forEach((a) => {
+      visibility[a.nombre] = true;
+    });
+    return visibility;
+  });
+
+  const toggleAmbulanceVisibility = (nombre: string) => {
+    setAmbulanceVisibility((prev) => ({
+      ...prev,
+      [nombre]: !(prev[nombre] ?? true),
+    }));
+  };
+
+  const setAllAmbulancesVisibility = (visible: boolean) => {
+    setAmbulanceVisibility(() => {
+      const newVisibility: Record<string, boolean> = {};
+      ambulancesData.forEach((a) => {
+        newVisibility[a.nombre] = visible;
+      });
+      return newVisibility;
+    });
+  };
 
   const updateMapDisplay = () => {
     console.log('Updating map display...');
@@ -40,19 +66,19 @@ export const useAmbulanceMap = () => {
     markersRef.current.clearLayers();
     coverageRef.current.clearLayers();
 
-    // Filter ambulances based on current filters - FIXED LOGIC
+    // Filtrar ambulancias según filtros y visibilidad
     const filteredAmbulances = ambulancesData.filter(ambulance => {
       // Check type filter
       const typeMatch = (filters.showSVB && ambulance.tipo === 'SVB') || 
-                       (filters.showSVA && ambulance.tipo === 'SVA');
-      
+                        (filters.showSVA && ambulance.tipo === 'SVA');
       // Check schedule filter  
       const scheduleMatch = (filters.show24h && ambulance.horario === '24 h') || 
-                           (filters.show12h && ambulance.horario === '12 h (día)');
-      
-      return typeMatch && scheduleMatch;
+                            (filters.show12h && ambulance.horario === '12 h (día)');
+      // Visibilidad individual
+      const visible = ambulanceVisibility[ambulance.nombre] ?? true;
+      return typeMatch && scheduleMatch && visible;
     });
-    
+
     console.log('Current filters:', filters);
     console.log('Total ambulances:', ambulancesData.length);
     console.log('Filtered ambulances:', filteredAmbulances.length);
@@ -207,6 +233,9 @@ export const useAmbulanceMap = () => {
     nearestAmbulance,
     filters,
     getCurrentLocation,
-    toggleFilter
+    toggleFilter,
+    ambulanceVisibility,
+    toggleAmbulanceVisibility,
+    setAllAmbulancesVisibility
   };
 };
