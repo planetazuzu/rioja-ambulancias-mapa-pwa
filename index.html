@@ -12,35 +12,31 @@
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json" />
     
-    <!-- Apple PWA Meta Tags -->
-    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <!-- Apple PWA Meta Tags - Updated to non-deprecated version -->
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Ambulancias La Rioja" />
     
-    <!-- Favicons -->
-    <link rel="icon" href="/ambulance-icon.png" type="image/png" />
-    <link rel="apple-touch-icon" href="/ambulance-icon.png" />
+    <!-- Favicons - Using a simple SVG icon instead of the problematic PNG -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚑</text></svg>" />
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚑</text></svg>" />
 
     <!-- Open Graph -->
     <meta property="og:title" content="Ambulancias La Rioja - Mapa de Cobertura" />
     <meta property="og:description" content="Mapa interactivo de cobertura de ambulancias en La Rioja" />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="/ambulance-icon.png" />
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:image" content="/ambulance-icon.png" />
     
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
   </head>
 
   <body>
     <div id="root"></div>
     <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
