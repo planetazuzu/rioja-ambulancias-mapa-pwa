@@ -73,17 +73,21 @@ export const useAmbulanceMap = () => {
       `);
       markersRef.current.addLayer(marker);
 
-      // Add coverage circles
+      // Add coverage circles with fill
       const cobertura10 = L.circle([ambulance.lat, ambulance.lng], {
         color: "blue",
-        fill: false,
+        fill: true,
+        fillColor: "blue",
+        fillOpacity: 0.18,
         radius: 10000, // 10 km
         weight: 1.5
       });
 
       const cobertura15 = L.circle([ambulance.lat, ambulance.lng], {
         color: "red",
-        fill: false,
+        fill: true,
+        fillColor: "red",
+        fillOpacity: 0.12,
         radius: 15000, // 15 km
         weight: 1.5
       });
