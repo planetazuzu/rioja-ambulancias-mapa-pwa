@@ -20,7 +20,7 @@ const AmbulanceMap: React.FC = () => {
   console.log('Rendering AmbulanceMap component');
   
   return (
-    <div className="flex flex-col lg:flex-row h-screen bg-background">
+    <div className="flex h-screen bg-background relative">
       {/* Controls Sidebar */}
       <MapSidebar
         filters={filters}

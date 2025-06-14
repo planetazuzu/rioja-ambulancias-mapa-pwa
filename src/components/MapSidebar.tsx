@@ -1,6 +1,6 @@
 
-import React from 'react';
-import { MapPin, Navigation, Eye, EyeOff, EyeIcon, EyeOffIcon } from 'lucide-react';
+import React, { useState } from 'react';
+import { MapPin, Navigation, Eye, EyeOff, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from './ui/checkbox';
@@ -29,127 +29,167 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
   toggleAmbulanceVisibility,
   setAllAmbulancesVisibility
 }) => {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
   // Saber si todas están seleccionadas
   const visibleCount = Object.values(ambulanceVisibility).filter(Boolean).length;
   const allChecked = visibleCount === ambulancesData.length;
   const someChecked = visibleCount > 0 && visibleCount < ambulancesData.length;
 
   return (
-    <div className="lg:w-80 w-full lg:h-full h-auto bg-card border-r border-border p-4 overflow-y-auto">
-      <div className="space-y-4">
-        {/* Header */}
-        <div className="flex items-center gap-2 mb-6">
-          <MapPin className="w-6 h-6 text-primary" />
-          <h1 className="text-xl font-bold text-foreground">Mapa de Ambulancias en La Rioja</h1>
-        </div>
+    <>
+      {/* Botón hamburguesa - siempre visible */}
+      <Button
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        className="fixed top-4 left-4 z-50 lg:hidden"
+        size="icon"
+        variant="outline"
+      >
+        {isCollapsed ? <Menu className="w-4 h-4" /> : <X className="w-4 h-4" />}
+      </Button>
 
-        {/* Location Button */}
-        <Button onClick={onLocationClick} className="w-full flex items-center gap-2" variant="outline">
-          <Navigation className="w-4 h-4" />
-          Mi Ubicación
-        </Button>
-
-        {/* Filtros */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm">Filtros</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid grid-cols-2 gap-2">
-              <Button 
-                variant={filters.showSVB ? "default" : "outline"} 
-                size="sm" 
-                onClick={() => onToggleFilter('showSVB')} 
-                className="text-xs"
-              >
-                {filters.showSVB ? <Eye className="w-3 h-3 mr-1" /> : <EyeOff className="w-3 h-3 mr-1" />}
-                SVB
-              </Button>
-              <Button 
-                variant={filters.showSVA ? "default" : "outline"} 
-                size="sm" 
-                onClick={() => onToggleFilter('showSVA')} 
-                className="text-xs"
-              >
-                {filters.showSVA ? <Eye className="w-3 h-3 mr-1" /> : <EyeOff className="w-3 h-3 mr-1" />}
-                SVA
-              </Button>
-              <Button 
-                variant={filters.show24h ? "default" : "outline"} 
-                size="sm" 
-                onClick={() => onToggleFilter('show24h')} 
-                className="text-xs"
-              >
-                {filters.show24h ? <Eye className="w-3 h-3 mr-1" /> : <EyeOff className="w-3 h-3 mr-1" />}
-                24h
-              </Button>
-              <Button 
-                variant={filters.show12h ? "default" : "outline"} 
-                size="sm" 
-                onClick={() => onToggleFilter('show12h')} 
-                className="text-xs"
-              >
-                {filters.show12h ? <Eye className="w-3 h-3 mr-1" /> : <EyeOff className="w-3 h-3 mr-1" />}
-                12h
-              </Button>
+      {/* Sidebar */}
+      <div className={`
+        fixed lg:relative top-0 left-0 z-40 
+        lg:w-80 w-80 h-full 
+        bg-card border-r border-border p-4 overflow-y-auto
+        transition-transform duration-300 ease-in-out
+        ${isCollapsed ? '-translate-x-full lg:translate-x-0' : 'translate-x-0'}
+        lg:block
+      `}>
+        <div className="space-y-4">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <MapPin className="w-6 h-6 text-primary" />
+              <h1 className="text-xl font-bold text-foreground">Mapa de Ambulancias en La Rioja</h1>
             </div>
-          </CardContent>
-        </Card>
+            {/* Botón X para móvil */}
+            <Button
+              onClick={() => setIsCollapsed(true)}
+              className="lg:hidden"
+              size="icon"
+              variant="ghost"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
 
-        {/* NUEVO: Selector de "todas" y lista de ambulancias */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm">Capas</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="mb-2 flex items-center gap-2">
-              <Checkbox
-                id="toggle-all"
-                checked={allChecked}
-                indeterminate={someChecked}
-                onCheckedChange={(checked) => {
-                  setAllAmbulancesVisibility(!!checked);
-                }}
-              />
-              <label htmlFor="toggle-all" className="text-xs font-semibold select-none cursor-pointer">
-                Seleccionar todas
-              </label>
-            </div>
-            <div className="max-h-52 overflow-y-auto pr-2 space-y-1">
-              {ambulancesData.map(ambulance => (
-                <div key={ambulance.nombre} className="flex items-center gap-2">
-                  <Checkbox
-                    id={`ambulance-${ambulance.nombre}`}
-                    checked={ambulanceVisibility[ambulance.nombre]}
-                    onCheckedChange={() => toggleAmbulanceVisibility(ambulance.nombre)}
-                  />
-                  <label htmlFor={`ambulance-${ambulance.nombre}`} className="text-xs cursor-pointer select-none">
-                    {ambulance.nombre} <span className="text-[10px] text-muted-foreground">({ambulance.tipo})</span>
-                  </label>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+          {/* Location Button */}
+          <Button onClick={onLocationClick} className="w-full flex items-center gap-2" variant="outline">
+            <Navigation className="w-4 h-4" />
+            Mi Ubicación
+          </Button>
 
-        {/* Nearest Ambulance */}
-        {nearestAmbulance && userLocation && (
+          {/* Filtros */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">Ambulancia Más Cercana</CardTitle>
+              <CardTitle className="text-sm">Filtros</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-xs space-y-1">
-                <p className="font-medium">{nearestAmbulance.nombre}</p>
-                <p className="text-muted-foreground">
-                  Distancia: {calculateDistance(userLocation.lat, userLocation.lng, nearestAmbulance.lat, nearestAmbulance.lng).toFixed(1)} km
-                </p>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-2 gap-2">
+                <Button 
+                  variant={filters.showSVB ? "default" : "outline"} 
+                  size="sm" 
+                  onClick={() => onToggleFilter('showSVB')} 
+                  className="text-xs"
+                >
+                  {filters.showSVB ? <Eye className="w-3 h-3 mr-1" /> : <EyeOff className="w-3 h-3 mr-1" />}
+                  SVB
+                </Button>
+                <Button 
+                  variant={filters.showSVA ? "default" : "outline"} 
+                  size="sm" 
+                  onClick={() => onToggleFilter('showSVA')} 
+                  className="text-xs"
+                >
+                  {filters.showSVA ? <Eye className="w-3 h-3 mr-1" /> : <EyeOff className="w-3 h-3 mr-1" />}
+                  SVA
+                </Button>
+                <Button 
+                  variant={filters.show24h ? "default" : "outline"} 
+                  size="sm" 
+                  onClick={() => onToggleFilter('show24h')} 
+                  className="text-xs"
+                >
+                  {filters.show24h ? <Eye className="w-3 h-3 mr-1" /> : <EyeOff className="w-3 h-3 mr-1" />}
+                  24h
+                </Button>
+                <Button 
+                  variant={filters.show12h ? "default" : "outline"} 
+                  size="sm" 
+                  onClick={() => onToggleFilter('show12h')} 
+                  className="text-xs"
+                >
+                  {filters.show12h ? <Eye className="w-3 h-3 mr-1" /> : <EyeOff className="w-3 h-3 mr-1" />}
+                  12h
+                </Button>
               </div>
             </CardContent>
           </Card>
-        )}
+
+          {/* Selector de "todas" y lista de ambulancias */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">Capas</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-2 flex items-center gap-2">
+                <Checkbox
+                  id="toggle-all"
+                  checked={allChecked}
+                  onCheckedChange={(checked) => {
+                    setAllAmbulancesVisibility(!!checked);
+                  }}
+                />
+                <label htmlFor="toggle-all" className="text-xs font-semibold select-none cursor-pointer">
+                  Seleccionar todas {someChecked && `(${visibleCount}/${ambulancesData.length})`}
+                </label>
+              </div>
+              <div className="max-h-52 overflow-y-auto pr-2 space-y-1">
+                {ambulancesData.map(ambulance => (
+                  <div key={ambulance.nombre} className="flex items-center gap-2">
+                    <Checkbox
+                      id={`ambulance-${ambulance.nombre}`}
+                      checked={ambulanceVisibility[ambulance.nombre]}
+                      onCheckedChange={() => toggleAmbulanceVisibility(ambulance.nombre)}
+                    />
+                    <label htmlFor={`ambulance-${ambulance.nombre}`} className="text-xs cursor-pointer select-none">
+                      {ambulance.nombre} <span className="text-[10px] text-muted-foreground">({ambulance.tipo})</span>
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Nearest Ambulance */}
+          {nearestAmbulance && userLocation && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">Ambulancia Más Cercana</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-xs space-y-1">
+                  <p className="font-medium">{nearestAmbulance.nombre}</p>
+                  <p className="text-muted-foreground">
+                    Distancia: {calculateDistance(userLocation.lat, userLocation.lng, nearestAmbulance.lat, nearestAmbulance.lng).toFixed(1)} km
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
-    </div>
+
+      {/* Overlay para móvil cuando el sidebar está abierto */}
+      {!isCollapsed && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
+          onClick={() => setIsCollapsed(true)}
+        />
+      )}
+    </>
   );
 };
 
