@@ -29,6 +29,9 @@ export const useAmbulanceMap = () => {
     show12h: true
   });
 
+  // Estado para el sidebar colapsable
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
   // NUEVO: visibilidad individual
   const [ambulanceVisibility, setAmbulanceVisibility] = useState<Record<string, boolean>>(() => {
     const visibility: Record<string, boolean> = {};
@@ -224,7 +227,7 @@ export const useAmbulanceMap = () => {
   useEffect(() => {
     console.log('Filters changed:', filters);
     updateMapDisplay();
-  }, [filters]);
+  }, [filters, ambulanceVisibility]);
 
   return {
     mapRef,
@@ -236,6 +239,8 @@ export const useAmbulanceMap = () => {
     toggleFilter,
     ambulanceVisibility,
     toggleAmbulanceVisibility,
-    setAllAmbulancesVisibility
+    setAllAmbulancesVisibility,
+    isCollapsed,
+    setIsCollapsed
   };
 };

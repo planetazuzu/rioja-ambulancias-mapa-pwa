@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { MapPin, Navigation, Eye, EyeOff, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,6 +17,8 @@ interface MapSidebarProps {
   ambulanceVisibility: Record<string, boolean>;
   toggleAmbulanceVisibility: (nombre: string) => void;
   setAllAmbulancesVisibility: (visible: boolean) => void;
+  isCollapsed: boolean;
+  setIsCollapsed: (collapsed: boolean) => void;
 }
 
 const MapSidebar: React.FC<MapSidebarProps> = ({
@@ -27,10 +29,10 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
   onToggleFilter,
   ambulanceVisibility,
   toggleAmbulanceVisibility,
-  setAllAmbulancesVisibility
+  setAllAmbulancesVisibility,
+  isCollapsed,
+  setIsCollapsed
 }) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
-
   // Saber si todas están seleccionadas
   const visibleCount = Object.values(ambulanceVisibility).filter(Boolean).length;
   const allChecked = visibleCount === ambulancesData.length;
@@ -41,7 +43,7 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
       {/* Botón hamburguesa - siempre visible */}
       <Button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="fixed top-4 left-4 z-50 lg:hidden"
+        className="fixed top-4 left-4 z-50"
         size="icon"
         variant="outline"
       >
@@ -50,29 +52,17 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
 
       {/* Sidebar */}
       <div className={`
-        fixed lg:relative top-0 left-0 z-40 
-        lg:w-80 w-80 h-full 
+        fixed top-0 left-0 z-40 
+        w-80 h-full 
         bg-card border-r border-border p-4 overflow-y-auto
         transition-transform duration-300 ease-in-out
-        ${isCollapsed ? '-translate-x-full lg:translate-x-0' : 'translate-x-0'}
-        lg:block
+        ${isCollapsed ? '-translate-x-full' : 'translate-x-0'}
       `}>
-        <div className="space-y-4">
+        <div className="space-y-4 mt-16">
           {/* Header */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              <MapPin className="w-6 h-6 text-primary" />
-              <h1 className="text-xl font-bold text-foreground">Mapa de Ambulancias en La Rioja</h1>
-            </div>
-            {/* Botón X para móvil */}
-            <Button
-              onClick={() => setIsCollapsed(true)}
-              className="lg:hidden"
-              size="icon"
-              variant="ghost"
-            >
-              <X className="w-4 h-4" />
-            </Button>
+          <div className="flex items-center gap-2 mb-6">
+            <MapPin className="w-6 h-6 text-primary" />
+            <h1 className="text-xl font-bold text-foreground">Mapa de Ambulancias en La Rioja</h1>
           </div>
 
           {/* Location Button */}
@@ -182,10 +172,10 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
         </div>
       </div>
 
-      {/* Overlay para móvil cuando el sidebar está abierto */}
+      {/* Overlay para cuando el sidebar está abierto */}
       {!isCollapsed && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
+          className="fixed inset-0 bg-black bg-opacity-50 z-30"
           onClick={() => setIsCollapsed(true)}
         />
       )}

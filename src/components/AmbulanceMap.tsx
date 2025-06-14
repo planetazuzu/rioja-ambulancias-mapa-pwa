@@ -14,7 +14,9 @@ const AmbulanceMap: React.FC = () => {
     toggleFilter,
     ambulanceVisibility,
     toggleAmbulanceVisibility,
-    setAllAmbulancesVisibility
+    setAllAmbulancesVisibility,
+    isCollapsed,
+    setIsCollapsed
   } = useAmbulanceMap();
 
   console.log('Rendering AmbulanceMap component');
@@ -31,10 +33,12 @@ const AmbulanceMap: React.FC = () => {
         ambulanceVisibility={ambulanceVisibility}
         toggleAmbulanceVisibility={toggleAmbulanceVisibility}
         setAllAmbulancesVisibility={setAllAmbulancesVisibility}
+        isCollapsed={isCollapsed}
+        setIsCollapsed={setIsCollapsed}
       />
 
       {/* Map */}
-      <div className="flex-1 relative">
+      <div className={`flex-1 relative transition-all duration-300 ${isCollapsed ? 'ml-0' : 'ml-0'}`}>
         <div 
           ref={mapRef} 
           className="w-full h-full" 
