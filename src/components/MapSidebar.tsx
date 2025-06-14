@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { MapPin, Navigation, Eye, EyeOff, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -40,13 +39,13 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
 
   return (
     <>
-      {/* Botón hamburguesa – siempre visible, por encima de TODO */}
+      {/* Botón hamburguesa – SIEMPRE visible */}
       <div
         style={{
           position: "fixed",
           top: 16,
           left: 16,
-          zIndex: 9999, // Máxima prioridad en z-index
+          zIndex: 9999
         }}
       >
         <Button
@@ -60,14 +59,19 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
         </Button>
       </div>
 
-      {/* Sidebar */}
-      <div className={`
-        fixed top-0 left-0 z-40 
-        w-80 h-full 
-        bg-card border-r border-border p-4 overflow-y-auto
-        transition-transform duration-300 ease-in-out
-        ${isCollapsed ? '-translate-x-full' : 'translate-x-0'}
-      `}>
+      {/* Sidebar: visible solo si isCollapsed === false */}
+      <div
+        className={`
+          fixed top-0 left-0 z-[9998]
+          w-80 max-w-full h-full 
+          bg-card border-r border-border p-4 overflow-y-auto
+          transition-transform duration-300 ease-in-out
+          ${isCollapsed ? '-translate-x-full pointer-events-none select-none' : 'translate-x-0'}
+        `}
+        style={{
+          boxShadow: !isCollapsed ? '3px 0 16px rgba(40,40,50,0.07)' : undefined,
+        }}
+      >
         <div className="space-y-4 mt-16">
           {/* Header */}
           <div className="flex items-center gap-2 mb-6">
@@ -181,11 +185,10 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
           )}
         </div>
       </div>
-
-      {/* Overlay para cuando el sidebar está abierto */}
+      {/* Overlay oscuro cuando el sidebar está abierto */}
       {!isCollapsed && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-30"
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-[9997]"
           onClick={() => setIsCollapsed(true)}
         />
       )}
