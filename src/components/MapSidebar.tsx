@@ -40,15 +40,25 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
 
   return (
     <>
-      {/* Botón hamburguesa - siempre visible */}
-      <Button
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        className="fixed top-4 left-4 z-50"
-        size="icon"
-        variant="outline"
+      {/* Botón hamburguesa – siempre visible, por encima de TODO */}
+      <div
+        style={{
+          position: "fixed",
+          top: 16,
+          left: 16,
+          zIndex: 9999, // Máxima prioridad en z-index
+        }}
       >
-        {isCollapsed ? <Menu className="w-4 h-4" /> : <X className="w-4 h-4" />}
-      </Button>
+        <Button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="rounded-full shadow bg-background border"
+          size="icon"
+          variant="outline"
+          aria-label={isCollapsed ? "Abrir menú" : "Cerrar menú"}
+        >
+          {isCollapsed ? <Menu className="w-5 h-5" /> : <X className="w-5 h-5" />}
+        </Button>
+      </div>
 
       {/* Sidebar */}
       <div className={`
