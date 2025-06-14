@@ -23,7 +23,7 @@ export const ambulancesData: Ambulance[] = [
   { "nombre": "CARPA Logroño SVB (2)", "tipo": "SVB", "horario": "24 h", "lat": 42.4621, "lng": -2.4510 },
   { "nombre": "CARPA Logroño SVA", "tipo": "SVA", "horario": "24 h", "lat": 42.4621, "lng": -2.4510 },
   { "nombre": "Logroño - Pedregales SVB", "tipo": "SVB", "horario": "12 h (día)", "lat": 42.4685, "lng": -2.4542 },
-  { "nombre": "Logroño - Siete Infantes SVA", "tipo": "SVA", "horario": "12 h (día)", "lat": 42.4682, "lng": -2.4382 },
+  { "nombre": "Logroño - Siete Infantes SVA", "tipo": "SVA", "horario": "12 h (día)", "lat": 42.4580, "lng": -2.4600 },
   { "nombre": "Villanueva de Cameros SVB", "tipo": "SVB", "horario": "24 h", "lat": 42.1377, "lng": -2.6566 },
   { "nombre": "Cenicero SVB", "tipo": "SVB", "horario": "12 h (día)", "lat": 42.5145, "lng": -2.6942 }
 ];
