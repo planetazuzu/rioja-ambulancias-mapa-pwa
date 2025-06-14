@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import { ambulancesData, LA_RIOJA_CENTER, Ambulance } from '../data/ambulances';
@@ -49,8 +48,9 @@ export const useAmbulanceMap = () => {
     });
     console.log('Filtered ambulances:', filteredAmbulances.length);
 
-    // Add markers for filtered ambulances
+    // Add markers and coverage circles for filtered ambulances
     filteredAmbulances.forEach(ambulance => {
+      // Add marker
       const marker = L.marker([ambulance.lat, ambulance.lng], {
         icon: getMarkerIcon(ambulance)
       });
@@ -62,10 +62,29 @@ export const useAmbulanceMap = () => {
         </div>
       `);
       markersRef.current.addLayer(marker);
+
+      // Add coverage circles
+      const cobertura10 = L.circle([ambulance.lat, ambulance.lng], {
+        color: "blue",
+        fill: false,
+        radius: 10000, // 10 km
+        weight: 1.5
+      });
+
+      const cobertura15 = L.circle([ambulance.lat, ambulance.lng], {
+        color: "red",
+        fill: false,
+        radius: 15000, // 15 km
+        weight: 1.5
+      });
+
+      coverageRef.current.addLayer(cobertura10);
+      coverageRef.current.addLayer(cobertura15);
     });
 
     // Add layers to map
     markersRef.current.addTo(mapInstanceRef.current);
+    coverageRef.current.addTo(mapInstanceRef.current);
     console.log('Map display updated successfully');
   };
 
