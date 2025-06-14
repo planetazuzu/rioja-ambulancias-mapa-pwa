@@ -40,13 +40,23 @@ export const useAmbulanceMap = () => {
     markersRef.current.clearLayers();
     coverageRef.current.clearLayers();
 
-    // Filter ambulances based on current filters
+    // Filter ambulances based on current filters - FIXED LOGIC
     const filteredAmbulances = ambulancesData.filter(ambulance => {
-      const typeMatch = filters.showSVB && ambulance.tipo === 'SVB' || filters.showSVA && ambulance.tipo === 'SVA';
-      const scheduleMatch = filters.show24h && ambulance.horario === '24 h' || filters.show12h && ambulance.horario === '12 h (día)';
+      // Check type filter
+      const typeMatch = (filters.showSVB && ambulance.tipo === 'SVB') || 
+                       (filters.showSVA && ambulance.tipo === 'SVA');
+      
+      // Check schedule filter  
+      const scheduleMatch = (filters.show24h && ambulance.horario === '24 h') || 
+                           (filters.show12h && ambulance.horario === '12 h (día)');
+      
       return typeMatch && scheduleMatch;
     });
+    
+    console.log('Current filters:', filters);
+    console.log('Total ambulances:', ambulancesData.length);
     console.log('Filtered ambulances:', filteredAmbulances.length);
+    console.log('Filtered ambulance types:', filteredAmbulances.map(a => a.tipo));
 
     // Add markers and coverage circles for filtered ambulances
     filteredAmbulances.forEach(ambulance => {
