@@ -89,17 +89,59 @@ export const useAmbulanceMap = () => {
 
     // Add markers and coverage circles for filtered ambulances
     filteredAmbulances.forEach(ambulance => {
+      // Calcula distancia si el usuario tiene ubicación activa
+      let distanceStr = '';
+      if (userLocation) {
+        const km = calculateDistance(
+          userLocation.lat,
+          userLocation.lng,
+          ambulance.lat,
+          ambulance.lng
+        );
+        distanceStr = `<p class="text-xs text-gray-600">Distancia: ${km.toFixed(1)} km</p>`;
+      }
+
       // Add marker
       const marker = L.marker([ambulance.lat, ambulance.lng], {
         icon: getMarkerIcon(ambulance)
       });
-      marker.bindPopup(`
-        <div class="p-2">
+
+      // Botón para centrar el mapa
+      const popupContent = `
+        <div class="p-2 space-y-1">
           <h3 class="font-bold text-sm">${ambulance.nombre}</h3>
           <p class="text-xs text-gray-600">Tipo: ${ambulance.tipo}</p>
           <p class="text-xs text-gray-600">Horario: ${ambulance.horario}</p>
+          ${distanceStr}
+          <button
+            type="button"
+            class="mt-2 px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-semibold w-full focus:outline-none focus:ring-2 focus:ring-blue-400"
+            data-center-ambulance
+          >
+            Centrar mapa aquí
+          </button>
         </div>
-      `);
+      `;
+
+      marker.bindPopup(popupContent);
+
+      // Handler para centrar el mapa
+      marker.on('popupopen', function (e) {
+        // Tiempo para asegurar que el DOM del popup está listo
+        setTimeout(() => {
+          const popupEl = document.querySelector('.leaflet-popup-content [data-center-ambulance]');
+          if (popupEl) {
+            popupEl.addEventListener('click', () => {
+              if (mapInstanceRef.current) {
+                mapInstanceRef.current.setView([ambulance.lat, ambulance.lng], 14, {
+                  animate: true
+                });
+              }
+            });
+          }
+        }, 150);
+      });
+
       markersRef.current.addLayer(marker);
 
       // Add coverage circles with fill
