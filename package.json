@@ -1,7 +1,8 @@
 {
-  "name": "vite_react_shadcn_ts",
+  "name": "rioja-ambulancias-mapa-pwa",
+  "description": "PWA de mapas de recursos de emergencias en La Rioja",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
